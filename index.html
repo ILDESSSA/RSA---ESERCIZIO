@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RSA - Firma Digitale</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      color: #ffffff;
+      margin: 0;
+      padding: 0;
+      background-image: url("Sfondo Alessia Lanza.png");
+      background-size: contain;
+    }
+
+    h1 {
+      text-align: center;
+      margin-top: 30px;
+      font-size: 2rem;
+      color: #ffffff;
+      width: fit-content;
+      background-color: #155fae;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    #container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-evenly;
+      gap: 15px;
+      background-color: #ffffff;
+      border: 2px solid #333;
+      border-radius: 16px;
+      width: 60%;
+      max-width: 700px;
+      padding: 25px 0;
+      margin: 40px auto;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    #container h2 {
+      margin: 0;
+      color: #222;
+      text-align: center;
+    }
+
+    textarea {
+      width: 90%;
+      height: 140px;
+      padding: 12px;
+      border: 2px solid #555;
+      border-radius: 10px;
+      font-size: 1rem;
+      resize: none;
+      background-color: #fafafa;
+      color: #333;
+      box-sizing: border-box;
+      transition: all 0.2s ease;
+    }
+
+    textarea:focus {
+      outline: none;
+      border-color: #007bff;
+      background-color: #fff;
+      box-shadow: 0 0 6px rgba(0, 123, 255, 0.4);
+    }
+
+    button {
+      background-color: #333;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 25px;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: all 0.2s ease;
+    }
+
+    button:hover {
+      background-color: #555;
+      transform: scale(1.05);
+    }
+
+    #container div {
+      display: flex;
+      justify-content: center;
+      width: 100%;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h1>RSA - FIRMA DIGITALE</h1>
+
+  <div id="container">
+    <h2>GENERAZIONE CHIAVI</h2>
+    <div>
+      <textarea id="TestoDati" readonly></textarea>
+    </div>
+    <div>
+      <button onclick="Dati()">Genera Chiavi</button>
+    </div>
+  </div>
+
+  <div id="container">
+    <h2>FIRMA DEL MESSAGGIO</h2>
+    <div>
+      <textarea id="AcquisizioneTesto" placeholder="Scrivi un messaggio..."></textarea>
+    </div>
+
+    <div>
+      <button onclick="FirmaMessaggio()">Firma il messaggio</button>
+    </div>
+
+    <div>
+      <textarea id="HashCode" readonly></textarea>
+    </div>
+  </div>
+
+  <div id="container">
+    <h2>VERIFICA DELLA FIRMA</h2>
+    <h3>Messaggio ricevuto:</h3>
+    <div>
+      <textarea id="VerificaTesto" placeholder="Inserisci il messaggio ricevuto..."></textarea>
+    </div>
+
+    <h3>Firma ricevuta:</h3>
+    <div>
+      <textarea id="VerificaFirma" placeholder="Inserisci la firma ricevuta..."></textarea>
+    </div>
+
+    <div>
+      <button onclick="VerificaFirmaFunzione()">Verifica la firma</button>
+    </div>
+
+    <div>
+      <textarea id="RisultatoVerifica" readonly></textarea>
+    </div>
+  </div>
+
+  <script>
+
+    // UAGLIU O VETTORE CA' PRETA
+
+    const sfondi = ['url("Sfondo Alessia Lanza.png")','url("Sfondo Anna Pepe.png")','url("sfondo_Annalisa_la_Bellissima.png")']
+
+    let contasfondi = 1;
+
+    setInterval(function () {
+      document.body.style.backgroundImage = sfondi[contasfondi] 
+      if (contasfondi == 2) {
+        contasfondi = 0;
+      } else {
+        contasfondi++;
+      }
+
+    }, 3000);
+
+
+    //UAGLIU O' VETTORE CO' NUMER
+    const primes = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59,
+      61, 67, 71, 73, 79, 83, 89, 97, 101, 103, 107, 109, 113, 127, 131, 137, 139,
+      149, 151, 157, 163, 167, 173, 179, 181, 191, 193, 197, 199, 211, 223, 227, 229,
+      233, 239, 241, 251, 257, 263, 269, 271, 277, 281, 283, 293, 307, 311, 313, 317,
+      331, 337, 347, 349, 353, 359, 367, 373, 379, 383, 389, 397, 401, 409, 419, 421,
+      431, 433, 439, 443, 449, 457, 461, 463, 467, 479, 487, 491, 499, 503, 509, 521,
+      523, 541, 547, 557, 563, 569, 571, 577, 587, 593, 599, 601, 607, 613, 617, 619,
+      631, 641, 643, 647, 653, 659, 661, 673, 677, 683, 691, 701, 709, 719, 727, 733,
+      739, 743, 751, 757, 761, 769, 773, 787, 797, 809, 811, 821, 823, 827, 829, 839,
+      853, 857, 859, 863, 877, 881, 883, 887, 907, 911, 919, 929, 937, 941, 947, 953,
+      967, 971, 977, 983, 991, 997];
+
+    let Npriv, Npub, N;
+
+
+    // E CHE SFACCIM CA, A GENERAZIONE CHIAVI
+
+    function Dati() {
+
+      function ScomponiInFattori(numero) {
+        let fattori = [];
+        let divisore = 2;
+        while (numero > 1) {
+          while (numero % divisore === 0) {
+            fattori.push(divisore);
+            numero /= divisore;
+          }
+          divisore++;
+          if (divisore * divisore > numero && numero > 1) {
+            fattori.push(numero);
+            break;
+          }
+        }
+        return fattori;
+      }
+
+      function NumeroPriv(fattori) {
+        for (let i = 0; i < primes.length; i++) {
+          let candidato = primes[i];
+          if (!fattori.includes(candidato)) {
+            return candidato;
+          }
+        }
+      }
+
+      function NumeroPub(Npriv, V) {
+        for (let i = 1n; i < V; i++) {
+          if ((i * Npriv) % V === 1n) {
+            return i;
+          }
+        }
+      }
+
+      let p = BigInt(primes[Math.floor(Math.random() * primes.length)]);
+      let q = BigInt(primes[Math.floor(Math.random() * primes.length)]);
+      N = p * q;
+      let V = (p - 1n) * (q - 1n);
+
+      let fattori = ScomponiInFattori(Number(V));
+
+      Npriv = BigInt(NumeroPriv(fattori)); // chiave privata
+      Npub = NumeroPub(Npriv, V);          // chiave pubblica
+
+      let Text =
+        "p = " + p + "\n" +
+        "q = " + q + "\n" +
+        "N = " + N + "\n" +
+        "V = " + V + "\n\n" +
+        "Chiave pubblica (e, N) = (" + Npub + ", " + N + ")\n" +
+        "Chiave privata (d, N) = (" + Npriv + ", " + N + ")";
+
+      document.getElementById('TestoDati').value = Text;
+    }
+
+
+    // UAGLIUU  O'  FIRMA DEL MESSAGGIO
+
+    function FirmaMessaggio() {
+      let testo = document.getElementById('AcquisizioneTesto').value.trim();
+      if (testo === "") {
+        alert("Inserisci un messaggio prima di firmarlo!");
+        return;
+      }
+
+      let h1 = 2, h2 = 1, n1 = 31, n2 = 156;
+
+      for (let i = 0; i < testo.length; i++) {
+        h1 = (h1 * n1 * testo.charCodeAt(i)) % 1000000;
+        h2 = (h2 * n2 * testo.charCodeAt(i)) % 1000000;
+      }
+
+      let xor1 = (h1 ^ h2) % 10000;
+      let impronta = BigInt(xor1);
+
+      //UAGLIUUUUU Firma digitale 
+      let FirmaDigitale = (impronta ** Npriv) % N;
+
+      let Text =
+        "Messaggio originale: " + testo +
+        "\nImpronta (HASH): " + impronta +
+        "\nFirma Digitale = (HASH ^ d mod N): " + FirmaDigitale;
+
+      document.getElementById('HashCode').value = Text;
+      document.getElementById('VerificaTesto').value = testo;
+      document.getElementById('VerificaFirma').value = FirmaDigitale;
+    }
+
+
+    // UAGLIU E MO DOBBIAMO VERIFICA' A FIRMA
+
+    function VerificaFirmaFunzione() {
+      let messaggio = document.getElementById('VerificaTesto').value.trim();
+      let firma = document.getElementById('VerificaFirma').value.trim();
+
+      if (messaggio === "" || firma === "") {
+        alert("Inserisci sia il messaggio che la firma!");
+        return;
+      }
+
+      let h1 = 2, h2 = 1, n1 = 31, n2 = 156;
+
+      for (let i = 0; i < messaggio.length; i++) {
+        h1 = (h1 * n1 * messaggio.charCodeAt(i)) % 1000000;
+        h2 = (h2 * n2 * messaggio.charCodeAt(i)) % 1000000;
+      }
+
+      let xor2 = (h1 ^ h2) % 10000;
+      let improntaOriginale = BigInt(xor2);
+
+      let improntaDaFirma = (BigInt(firma) ** Npub) % N;
+
+      let risultato = "";
+      if (improntaDaFirma === improntaOriginale) {
+        risultato = "✅ Firma valida!\nIl messaggio è autentico e non è stato modificato.";
+      } else {
+        risultato = "❌ Firma NON valida!\nIl messaggio è stato alterato o la chiave è errata.";
+      }
+
+      let Text =
+        "Impronta calcolata: " + improntaOriginale +
+        "\nImpronta ottenuta dalla firma: " + improntaDaFirma +
+        "\n\n" + risultato;
+
+      document.getElementById('RisultatoVerifica').value = Text;
+    }
+  </script>
+</body>
+
+</html>
